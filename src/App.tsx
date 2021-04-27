@@ -1,26 +1,53 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React from "react";
+import {
+  BrowserRouter as Router,
+  Switch,
+  Route,
+  Link,
+//  RouteComponentProps
+} from "react-router-dom";
 
-function App() {
+import Ingredients from './Ingredients/Ingredients';
+import Items from './Items/Items'; 
+import Recipes from './Recipes/Recipes';
+import Home from './Home/Home';
+
+/*type TParams = { id: string };
+
+function Product({ match }: RouteComponentProps<TParams>) {
+  return <h2>This is a page for product with ID: {match.params.id} </h2>;
+}*/
+
+function AppRouter() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <div>
+        <nav>
+          <ul>
+            <li>
+              <Link to="/">Home</Link>
+            </li>
+            <li>
+              <Link to="/ingredients">Ingredients</Link>
+            </li>
+            <li>
+              <Link to="/items">Items</Link>
+            </li>
+            <li>
+              <Link to="/recipes">Recipes</Link>
+            </li>
+          </ul>
+        </nav>
+
+        <Switch>
+          <Route exact path='/' component={Home} />
+          <Route exact path='/ingredients' component={Ingredients} />
+          <Route exact path='/items' component={Items} />
+          <Route exact path='/recipes' component={Recipes} />
+        </Switch>
+      </div>
+    </Router>
   );
 }
-
-export default App;
+ 
+export default AppRouter;
