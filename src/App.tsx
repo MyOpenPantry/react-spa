@@ -12,12 +12,6 @@ import Items from './Items/Items';
 import Recipes from './Recipes/Recipes';
 import Home from './Home/Home';
 
-/*type TParams = { id: string };
-
-function Product({ match }: RouteComponentProps<TParams>) {
-  return <h2>This is a page for product with ID: {match.params.id} </h2>;
-}*/
-
 function AppRouter() {
   return (
     <Router>
