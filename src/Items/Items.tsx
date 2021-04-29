@@ -22,9 +22,12 @@ function Items() {
   const [loading, setLoading]: [boolean, (loading: boolean) => void] = useState<boolean>(true);
   const [error, setError]: [string, (error: string) => void] = useState("");
   // eslint-disable-next-line
-  const { register, setValue, handleSubmit, formState: { errors } } = useForm<Item>();
+  const { register, reset, handleSubmit, formState: { errors } } = useForm<Item>();
   
-  const onSubmit = handleSubmit(data => postData(data));
+  const onSubmit = (data:Item) => {
+    postData(data);
+    reset({});
+  };
 
   const postData = async (data: Item) => {
     // TODO fix this. Surely there's a better way to not send unused optional arguments
@@ -103,7 +106,7 @@ function Items() {
           </tbody>
         </table>
       <div>
-        <form onSubmit={onSubmit}>
+        <form onSubmit={handleSubmit(onSubmit)}>
           <label>Item Name</label>
           <input {...register("name", { required: true })} />
           {/* errors will return when field validation fails  */}
