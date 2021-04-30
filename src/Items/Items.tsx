@@ -5,12 +5,13 @@ import api from '../api';
 
 import { Item } from "./item.interface";
 
-const defaultItemLists:Readonly<Item>[] = []; 
+const defaultItemLists:Readonly<Item>[] = [];
+const defaultError:string[] = [];
 
 function Items() {
   const [items, setItems]: [Readonly<Item>[], (items: Readonly<Item>[]) => void] = useState(defaultItemLists);
   const [loading, setLoading]: [boolean, (loading: boolean) => void] = useState<boolean>(true);
-  const [error, setError]: [string, (error: string) => void] = useState("");
+  const [error, setError]: [string[], (error: string[]) => void] = useState(defaultError);
   // eslint-disable-next-line
   const { register, reset, handleSubmit, formState: { errors } } = useForm<Item>();
 
@@ -29,18 +30,34 @@ function Items() {
         console.log(res);
         //console.log(res.data);
         setItems([res.data, ...items])
+        reset({});
       })
       .catch(e => {
-        // TODO more robust handling
-        const error = 
-        e.response.status === 404
-          ? 'Resource Not Found'
-          : 'An unexpected error has occured';
-        console.log(e);
-        setError(error);
-        setLoading(false);
+        if (e.response.status === 422) {
+          const errors = e.response.data.errors.json;
+          var new_error:string[] = [];
+          console.log(errors);
+          if (errors.name) {
+            new_error.push(errors.name[0])
+          }
+          if (errors.ingredientId) {
+            new_error.push(errors.ingredientId[0])
+          }
+          if (errors.productId) {
+            new_error.push(errors.productId[0])
+          }
+          setError(new_error);
+        } else {
+          // TODO more robust handling
+          const error = 
+          e.response.status === 404
+            ? 'Resource Not Found'
+            : 'An unexpected error has occured';
+          console.log(e);
+          setError([error]);
+          setLoading(false);
+          }
       });
-    reset({});
   };
 
   const fetchData = async () => {
@@ -54,7 +71,7 @@ function Items() {
         e.status === 404
           ? 'Resource Not Found'
           : 'An unexpected error has occured';
-        setError(error);
+        setError([error]);
         setLoading(false);
       });
   }
@@ -67,7 +84,14 @@ function Items() {
   return (
     <div>
       {loading && (<p>Loading... </p>)}
-      {error && (<p color={'red'}>{error}</p>)}
+      {error.length > 0 && (
+        <ul>
+          {error.map((e) => (
+            <li>{e}</li>
+          ))}
+        </ul>
+        )
+      }
       <h1>Items</h1>
       <table>
           <thead>
