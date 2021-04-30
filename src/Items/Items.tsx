@@ -1,35 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from "react-hook-form";
 
-import API from '../api';
+import api from '../api';
 
-type Item = {
-  name: string;
-  amount: number;
-  productId?: number;
-  ingredientId?: number;
-}
+import { Item } from "./item.interface";
 
-type ListItem = Readonly<Item & { 
-  id: number;
-  updatedAt: Date;
-}>
-
-const defaultListItems:ListItem[] = [];
+const defaultItemLists:Readonly<Item>[] = []; 
 
 function Items() {
-  const [items, setItems]: [ListItem[], (items: ListItem[]) => void] = useState(defaultListItems);
+  const [items, setItems]: [Readonly<Item>[], (items: Readonly<Item>[]) => void] = useState(defaultItemLists);
   const [loading, setLoading]: [boolean, (loading: boolean) => void] = useState<boolean>(true);
   const [error, setError]: [string, (error: string) => void] = useState("");
   // eslint-disable-next-line
   const { register, reset, handleSubmit, formState: { errors } } = useForm<Item>();
-  
-  const onSubmit = (data:Item) => {
-    postData(data);
-    reset({});
-  };
 
-  const postData = async (data: Item) => {
+  const onSubmit = (data:Item) => {
     // TODO fix this. Surely there's a better way to not send unused optional arguments
     let toSend:Item = {name: data.name, amount: data.amount}
     if(data.ingredientId) {
@@ -39,38 +24,39 @@ function Items() {
       toSend.productId = data.productId;
     }
 
-    API.post('items/', toSend)
-    .then(res => {
-      console.log(res);
-      //console.log(res.data);
-      setItems([res.data, ...items])
-    })
-    .catch(e => {
-      // TODO more robust handling
-      const error = 
-      e.response.status === 404
-        ? 'Resource Not Found'
-        : 'An unexpected error has occured';
-      console.log(e);
-      setError(error);
-      setLoading(false);
-    });
-  }
+    api.post('items/', toSend)
+      .then(res => {
+        console.log(res);
+        //console.log(res.data);
+        setItems([res.data, ...items])
+      })
+      .catch(e => {
+        // TODO more robust handling
+        const error = 
+        e.response.status === 404
+          ? 'Resource Not Found'
+          : 'An unexpected error has occured';
+        console.log(e);
+        setError(error);
+        setLoading(false);
+      });
+    reset({});
+  };
 
   const fetchData = async () => {
-    API.get<ListItem[]>('items/')
-    .then(resp => {
-      setItems(resp.data);
-      setLoading(false);
-    })
-    .catch(e => {
-      const error = 
-      e.response.status === 404
-        ? 'Resource Not Found'
-        : 'An unexpected error has occured';
-      setError(error);
-      setLoading(false);
-    });
+    api.get('items/')
+      .then(resp => {
+        setItems(resp.data);
+        setLoading(false);
+      })
+      .catch(e => {
+        const error = 
+        e.status === 404
+          ? 'Resource Not Found'
+          : 'An unexpected error has occured';
+        setError(error);
+        setLoading(false);
+      });
   }
 
   useEffect (() => {
@@ -81,7 +67,7 @@ function Items() {
   return (
     <div>
       {loading && (<p>Loading... </p>)}
-      {error && <p color={'red'}>{error}</p>}
+      {error && (<p color={'red'}>{error}</p>)}
       <h1>Items</h1>
       <table>
           <thead>
