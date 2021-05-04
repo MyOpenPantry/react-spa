@@ -32,8 +32,12 @@ function Items() {
         //console.log(res.data);
         //setItems([res.data, ...items])
         reset({});
+        fetchData();
       })
       .catch(e => {
+        console.log(e);
+
+        // Check for input errors here
         if (e.response.status === 422) {
           const respError = e.response.data.errors.json;
           console.log(respError);
@@ -48,17 +52,15 @@ function Items() {
           if (respError.productId) {
             setError('productId', {type:'resp', message: respError.productId[0]}, {shouldFocus: true})
           }
-          console.log(errors)
         } else {
           // TODO more robust handling
           const error = 
           e.response.status === 404
             ? 'Resource Not Found'
             : 'An unexpected error has occured';
-          console.log(e);
           setAppErrors([error]);
           setLoading(false);
-          }
+        }
       });
   };
 
@@ -84,7 +86,7 @@ function Items() {
   }, []);
 
   return (
-    <div>
+    <main>
       {loading && (<p>Loading... </p>)}
       {appErrors.length > 0 && (
         <ul>
@@ -94,8 +96,9 @@ function Items() {
         </ul>
         )
       }
-      <h1>Items</h1>
-      <table>
+      <div style={{float: "left"}}>
+        <h1>Items</h1>
+        <table>
           <thead>
             <tr>
               <th>Name</th>
@@ -117,7 +120,9 @@ function Items() {
             ))}
           </tbody>
         </table>
-      <div>
+      </div>
+      <div style={{float: "left"}}>
+        <h1>Add New Item</h1>
         <form onSubmit={handleSubmit(onSubmit)}>
           <label>Item Name</label>
           <input {...register("name", { required: true })} />
@@ -139,10 +144,10 @@ function Items() {
           <label>Ingredient ID</label>
           <input type="number" {...register("ingredientId", {min: 0, required: false})} />
           {errors.ingredientId && <span style={{'color':'red'}}>{errors.ingredientId.message}</span>}
-          <input type="submit" />
+          <input type="submit" value="Submit" />
         </form>
       </div>
-   </div>
+   </main>
   )
 }
 
