@@ -39,19 +39,11 @@ function Recipes() {
         if (e.response.status === 422) {
           const respError = e.response.data.errors.json;
           console.log(respError);
-          // TODO iterate over Object.keys()? setError only allows names of the form fields ie: name | ingredientId | productId | ...
-          if (respError.name) {
-            console.log(respError.name[0])
-            setError('name', {type:'resp', message: respError.name[0]}, {shouldFocus: true})
-          }
-          if (respError.steps) {
-            setError('steps', {type:'resp', message: respError.steps[0]}, {shouldFocus: true})
-          }
-          if (respError.rating) {
-            setError('rating', {type:'resp', message: respError.rating[0]}, {shouldFocus: true})
-          }
-          if (respError.notes) {
-            setError('notes', {type:'resp', message: respError.notes[0]}, {shouldFocus: true})
+
+          for (const [k,] of Object.entries(toSend)) {
+            if (k in respError) {
+              setError(k as any, {type:'resp', message: respError[k][0]}, {shouldFocus: true})
+            }
           }
         } else {
           // TODO more robust handling

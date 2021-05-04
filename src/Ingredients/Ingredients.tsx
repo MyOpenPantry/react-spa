@@ -23,8 +23,6 @@ function Ingredients() {
     api.post('ingredients/', toSend)
       .then(res => {
         console.log(res);
-        //console.log(res.data);
-        //setIngredients([res.data, ...ingredients])
         reset({});
         fetchData();
       })
@@ -35,10 +33,11 @@ function Ingredients() {
         if (e.response.status === 422) {
           const respError = e.response.data.errors.json;
           console.log(respError);
-          // TODO iterate over Object.keys()? setError only allows names of the form fields ie: name | ingredientId | productId | ...
-          if (respError.name) {
-            console.log(respError.name[0])
-            setError('name', {type:'resp', message: respError.name[0]}, {shouldFocus: true})
+
+          for (const [k,] of Object.entries(toSend)) {
+            if (k in respError) {
+              setError(k as any, {type:'resp', message: respError[k][0]}, {shouldFocus: true})
+            }
           }
         } else {
           // TODO more robust handling
