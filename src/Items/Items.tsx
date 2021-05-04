@@ -6,14 +6,15 @@ import api from '../api';
 import { Item } from "./item.interface";
 
 const defaultItemLists:Readonly<Item>[] = [];
-const defaultError:string[] = [];
+const defaultAppErrors:string[] = [];
 
 function Items() {
   const [items, setItems]: [Readonly<Item>[], (items: Readonly<Item>[]) => void] = useState(defaultItemLists);
   const [loading, setLoading]: [boolean, (loading: boolean) => void] = useState<boolean>(true);
-  const [error, setError]: [string[], (error: string[]) => void] = useState(defaultError);
+  // errors not related to the form
+  const [appErrors, setAppErrors]: [string[], (appErrors: string[]) => void] = useState(defaultAppErrors);
   // eslint-disable-next-line
-  const { register, reset, handleSubmit, formState: { errors } } = useForm<Item>();
+  const { register, reset, handleSubmit, setError, formState: { errors } } = useForm<Item>();
 
   const onSubmit = (data:Item) => {
     // TODO fix this. Surely there's a better way to not send unused optional arguments
@@ -29,24 +30,25 @@ function Items() {
       .then(res => {
         console.log(res);
         //console.log(res.data);
-        setItems([res.data, ...items])
+        //setItems([res.data, ...items])
         reset({});
       })
       .catch(e => {
         if (e.response.status === 422) {
-          const errors = e.response.data.errors.json;
-          var new_error:string[] = [];
-          console.log(errors);
-          if (errors.name) {
-            new_error.push(errors.name[0])
+          const respError = e.response.data.errors.json;
+          console.log(respError);
+          // TODO iterate over Object.keys()? setError only allows names of the form fields ie: name | ingredientId | productId | ...
+          if (respError.name) {
+            console.log(respError.name[0])
+            setError('name', {type:'resp', message: respError.name[0]}, {shouldFocus: true})
           }
-          if (errors.ingredientId) {
-            new_error.push(errors.ingredientId[0])
+          if (respError.ingredientId) {
+            setError('ingredientId', {type:'resp', message: respError.ingredientId[0]}, {shouldFocus: true})
           }
-          if (errors.productId) {
-            new_error.push(errors.productId[0])
+          if (respError.productId) {
+            setError('productId', {type:'resp', message: respError.productId[0]}, {shouldFocus: true})
           }
-          setError(new_error);
+          console.log(errors)
         } else {
           // TODO more robust handling
           const error = 
@@ -54,7 +56,7 @@ function Items() {
             ? 'Resource Not Found'
             : 'An unexpected error has occured';
           console.log(e);
-          setError([error]);
+          setAppErrors([error]);
           setLoading(false);
           }
       });
@@ -71,7 +73,7 @@ function Items() {
         e.status === 404
           ? 'Resource Not Found'
           : 'An unexpected error has occured';
-        setError([error]);
+        setAppErrors([error]);
         setLoading(false);
       });
   }
@@ -84,9 +86,9 @@ function Items() {
   return (
     <div>
       {loading && (<p>Loading... </p>)}
-      {error.length > 0 && (
+      {appErrors.length > 0 && (
         <ul>
-          {error.map((e) => (
+          {appErrors.map((e) => (
             <li>{e}</li>
           ))}
         </ul>
@@ -120,17 +122,23 @@ function Items() {
           <label>Item Name</label>
           <input {...register("name", { required: true })} />
           {/* errors will return when field validation fails  */}
-          {errors.name && <span style={{'color':'red'}}>This field is required </span>}
+          {errors.name && (
+            <span style={{'color':'red'}}>
+              {errors.name.message !== '' ? errors.name.message : 'This field is required'}
+            </span>
+          )}
           <label>Amount</label>
           <input type="number" {...register("amount", { required: true })} />
           {/* errors will return when field validation fails  */}
-          {errors.amount && <span style={{'color':'red'}}>This field is required </span>}
+          {errors.amount && <span style={{'color':'red'}}>{errors.amount.message || 'This field is required'}</span>}
           {/* TODO camera support for barcode scanning on the web app? */}
           <label>Product ID</label>
-          <input type="number" {...register("productId", {maxLength: 12})} />
+          <input type="number" {...register("productId", {maxLength: 12, min: 0, required: false})} />
+          {errors.productId && <span style={{'color':'red'}}>{errors.productId.message}</span>}
           {/* TODO ingredient id will be a dropdown or search */}
           <label>Ingredient ID</label>
-          <input type="number" {...register("ingredientId")} />
+          <input type="number" {...register("ingredientId", {min: 0, required: false})} />
+          {errors.ingredientId && <span style={{'color':'red'}}>{errors.ingredientId.message}</span>}
           <input type="submit" />
         </form>
       </div>
