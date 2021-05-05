@@ -1,21 +1,21 @@
-import React, { useState, useEffect, useCallback, ChangeEvent } from 'react';
+import React, { useState, useEffect, useCallback, ChangeEvent, SyntheticEvent } from 'react';
 import { useForm } from "react-hook-form";
-import axios, { CancelTokenSource } from 'axios';
+import axios from 'axios';
 import api from '../api';
 
 import { Item } from "./item.interface";
 
 const defaultItemLists:Readonly<Item>[] = [];
 const defaultAppErrors:string[] = [];
-const cancelToken = axios.CancelToken;
 
 function Items() {
   const [items, setItems]: [Readonly<Item>[], (items: Readonly<Item>[]) => void] = useState(defaultItemLists);
   const [loading, setLoading] = useState(true);
   // errors not related to the form
-  const [appErrors, setAppErrors]: [string[], (appErrors: string[]) => void] = useState(defaultAppErrors);
+  const [appErrors, setAppErrors] = useState(defaultAppErrors);
   const [queryString, setQueryString] = useState('');
-  const [cancel, setCancel]: [CancelTokenSource, (setCancel: CancelTokenSource) => void]= useState(cancelToken.source());
+  const [cancel, setCancel] = useState(axios.CancelToken.source());
+  const [pageState, setPageState] = useState({currentPage: 1, totalPages: 1, showPrev: false, showNext: false});
 
   // eslint-disable-next-line
   const { register, reset, handleSubmit, setError, formState: { errors } } = useForm<Item>();
@@ -62,12 +62,23 @@ function Items() {
   };
 
   const fetchItems = useCallback(() => {
-    api.get('items/' + queryString, {
+    const url = `items/${queryString}${pageState.currentPage > 1 ? `?page=${pageState.currentPage}` : ''}`;
+    api.get(url, {
       cancelToken: cancel.token,
     })
       .then(resp => {
         setItems(resp.data);
         setLoading(false);
+        // TODO the API is not setting this header
+        const pageHeaders = resp.headers['X-Pagination'];
+        if (pageHeaders?.length > 0) {
+          setPageState({
+            currentPage: pageHeaders.page,
+            totalPages: pageHeaders.total_pages,
+            showPrev: pageHeaders.page > 1,
+            showNext: pageHeaders.page < pageHeaders.total_pages,
+          });
+        }
       })
       .catch(e => {
         if (axios.isCancel(e)) {
@@ -81,7 +92,7 @@ function Items() {
         setAppErrors([error]);
         setLoading(false);
       });
-  }, [cancel.token, queryString]);
+  }, [cancel.token, queryString, pageState]);
 
   const handleOnInputChange = (event:ChangeEvent<HTMLInputElement>) => {
     const arg = event.target.value;
@@ -98,6 +109,23 @@ function Items() {
     fetchItems();
   }
 
+  const handlePageClick = (amount:number) => {
+    setPageState({
+      ...pageState,
+      currentPage: pageState.currentPage + amount,
+    })
+  }
+
+  const handleNextClick = (event:SyntheticEvent) => {
+    event.preventDefault();
+    handlePageClick(1);
+  }
+
+  const handlePrevClick = (event:SyntheticEvent) => {
+    event.preventDefault();
+    handlePageClick(-1);
+  }
+
   useEffect (() => {
     fetchItems();
     document.title = `Items`;
@@ -105,7 +133,6 @@ function Items() {
 
   return (
     <main>
-      {loading && (<p>Loading... </p>)}
       {appErrors.length > 0 && (
         <ul>
           {appErrors.map((e) => (
@@ -114,38 +141,61 @@ function Items() {
         </ul>
         )
       }
-      <div style={{float: "left"}}>
-        <h1>Items</h1>
-        <label htmlFor="search-input">
-					<input
-						type="text"
-						placeholder="Search..."
-            onChange={handleOnInputChange}
-					/>
-        </label>
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Amount</th>
-              <th>Last Updated</th>
-              <th>Product ID</th>
-              <th>Ingredient ID</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item) => (
-              <tr key={item.id}>
-                <td>{item.name}</td>
-                <td>{item.amount}</td>
-                <td>{item.updatedAt}</td>
-                <td>{item.productId}</td>
-                <td>{item.ingredientId}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {loading
+        ? (<p>Loading... </p>)
+        : (
+            <div style={{float: "left"}}>
+              <h1>Items</h1>
+              <label htmlFor="search-input">
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  onChange={handleOnInputChange}
+                />
+              </label>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Amount</th>
+                    <th>Last Updated</th>
+                    <th>Product ID</th>
+                    <th>Ingredient ID</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((item) => (
+                    <tr key={item.id}>
+                      <td>{item.name}</td>
+                      <td>{item.amount}</td>
+                      <td>{item.updatedAt}</td>
+                      <td>{item.productId}</td>
+                      <td>{item.ingredientId}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div>
+                <button
+                  style={{
+                    "display": pageState.showPrev ? 'block' : 'block'
+                  }}
+                  onClick={handlePrevClick}
+                >
+                  Prev 
+                </button>
+                <button
+                  style={{
+                    "display": pageState.showNext ? 'block' : 'block'
+                  }}
+                  onClick={handleNextClick}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )
+      }
       <div style={{float: "left"}}>
         <h1>Add New Item</h1>
         <form onSubmit={handleSubmit(onSubmit)}>
