@@ -110,14 +110,12 @@ function Items() {
         .then(resp => {
           setLoading(false);
           setItems(resp.data);
-          const pageHeaders = resp.headers['x-pagination'];
+          const pageHeaders = JSON.parse(resp.headers['x-pagination']);
           console.log(pageHeaders);
-          if (pageHeaders?.length > 0) {
-            setPageState({
-              currentPage: pageState.currentPage, // keep current page, only interested in updating total_pages here
-              totalPages: pageHeaders.total_pages
-            });
-          }
+          setPageState({
+            currentPage: pageHeaders.page, // keep current page, only interested in updating total_pages here
+            totalPages: pageHeaders['last_page']
+          });
         })
         .catch(e => {
           if (axios.isCancel(e)) {
@@ -139,7 +137,7 @@ function Items() {
   useEffect(() => {
     setPrevButton(pageState.currentPage > 1);
     setNextButton(pageState.currentPage < pageState.totalPages)
-  }, [pageState, items, queryString])
+  }, [pageState, items])
 
   return (
     <main>
