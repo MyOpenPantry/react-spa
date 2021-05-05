@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, ChangeEvent, SyntheticEvent } from 'react';
+import React, { useState, useEffect, ChangeEvent, SyntheticEvent } from 'react';
 import { useForm } from "react-hook-form";
 import axios from 'axios';
 import api from '../api';
@@ -15,7 +15,9 @@ function Items() {
   const [appErrors, setAppErrors] = useState(defaultAppErrors);
   const [queryString, setQueryString] = useState('');
   const [cancel, setCancel] = useState(axios.CancelToken.source());
-  const [pageState, setPageState] = useState({currentPage: 1, totalPages: 1, showPrev: false, showNext: false});
+  const [pageState, setPageState] = useState({currentPage: 1, totalPages: 1});
+  const [prevButton, setPrevButton] = useState(false);
+  const [nextButton, setNextButton] = useState(false);
 
   // eslint-disable-next-line
   const { register, reset, handleSubmit, setError, formState: { errors } } = useForm<Item>();
@@ -34,7 +36,6 @@ function Items() {
       .then(res => {
         console.log(res);
         reset({});
-        fetchItems();
       })
       .catch(e => {
         console.log(e);
@@ -61,39 +62,6 @@ function Items() {
       });
   };
 
-  const fetchItems = useCallback(() => {
-    const url = `items/${queryString}${pageState.currentPage > 1 ? `?page=${pageState.currentPage}` : ''}`;
-    api.get(url, {
-      cancelToken: cancel.token,
-    })
-      .then(resp => {
-        setItems(resp.data);
-        setLoading(false);
-        // TODO the API is not setting this header
-        const pageHeaders = resp.headers['X-Pagination'];
-        if (pageHeaders?.length > 0) {
-          setPageState({
-            currentPage: pageHeaders.page,
-            totalPages: pageHeaders.total_pages,
-            showPrev: pageHeaders.page > 1,
-            showNext: pageHeaders.page < pageHeaders.total_pages,
-          });
-        }
-      })
-      .catch(e => {
-        if (axios.isCancel(e)) {
-          // cancelled from new search input
-          return;
-        }
-        const error = 
-        e.status === 404
-          ? 'Resource Not Found'
-          : 'An unexpected error has occured';
-        setAppErrors([error]);
-        setLoading(false);
-      });
-  }, [cancel.token, queryString, pageState]);
-
   const handleOnInputChange = (event:ChangeEvent<HTMLInputElement>) => {
     const arg = event.target.value;
     // TODO pagination
@@ -101,15 +69,18 @@ function Items() {
       ? ''
       : (/^\d+$/.test(arg) ? '?productId=' : '?name=' ) + arg;
     setQueryString(query);
-    //setLoading(true);
+    setPageState({
+      ...pageState,
+      currentPage: 1,
+    })
     if (cancel) {
       cancel.cancel();
     }
-    setCancel(axios.CancelToken.source())
-    fetchItems();
+    setCancel(axios.CancelToken.source());
   }
 
   const handlePageClick = (amount:number) => {
+    console.log("updating page state")
     setPageState({
       ...pageState,
       currentPage: pageState.currentPage + amount,
@@ -127,9 +98,48 @@ function Items() {
   }
 
   useEffect (() => {
-    fetchItems();
     document.title = `Items`;
-  }, [fetchItems]);
+  })
+
+  useEffect (() => {
+    const fetchItems = () => {
+      const url = `items/${queryString}${pageState.currentPage > 1 ? `${queryString.length > 0 ? '&' : '?'}page=${pageState.currentPage}&page_size=10` : ''}`;
+      api.get(url, {
+        cancelToken: cancel.token,
+      })
+        .then(resp => {
+          setLoading(false);
+          setItems(resp.data);
+          const pageHeaders = resp.headers['x-pagination'];
+          console.log(pageHeaders);
+          if (pageHeaders?.length > 0) {
+            setPageState({
+              currentPage: pageState.currentPage, // keep current page, only interested in updating total_pages here
+              totalPages: pageHeaders.total_pages
+            });
+          }
+        })
+        .catch(e => {
+          if (axios.isCancel(e)) {
+            // cancelled from new search input
+            return;
+          }
+          const error = 
+          e.status === 404
+            ? 'Resource Not Found'
+            : 'An unexpected error has occured';
+          setAppErrors([error]);
+          setLoading(false);
+        });
+    };
+
+    fetchItems();
+  }, [cancel.token, pageState.currentPage, queryString]);
+
+  useEffect(() => {
+    setPrevButton(pageState.currentPage > 1);
+    setNextButton(pageState.currentPage < pageState.totalPages)
+  }, [pageState, items, queryString])
 
   return (
     <main>
@@ -178,7 +188,7 @@ function Items() {
               <div>
                 <button
                   style={{
-                    "display": pageState.showPrev ? 'block' : 'block'
+                    "display": prevButton ? 'block' : 'none'
                   }}
                   onClick={handlePrevClick}
                 >
@@ -186,7 +196,7 @@ function Items() {
                 </button>
                 <button
                   style={{
-                    "display": pageState.showNext ? 'block' : 'block'
+                    "display": nextButton ? 'block' : 'none'
                   }}
                   onClick={handleNextClick}
                 >
