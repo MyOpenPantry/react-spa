@@ -21,7 +21,7 @@ const ItemList = (props:props) => {
 
   const handleOnInputChange = (event:ChangeEvent<HTMLInputElement>) => {
     const arg = event.target.value;
-    // TODO pagination
+    // TODO currently assumes any arg of only integers means the user wants to search for a productID
     const query = (arg.length === 0)
       ? ''
       : (/^\d+$/.test(arg) ? '?productId=' : '?name=' ) + arg;
@@ -37,7 +37,7 @@ const ItemList = (props:props) => {
   }
 
   const handlePageClick = (amount:number) => {
-    console.log("updating page state")
+    // update currentPage to fire off a new fetchItems() call
     setPageState({
       ...pageState,
       currentPage: pageState.currentPage + amount,
@@ -61,10 +61,10 @@ const ItemList = (props:props) => {
         cancelToken: cancel.token,
       })
         .then(resp => {
+          setAppErrors([]);
           setLoading(false);
           setItems(resp.data);
           const pageHeaders = JSON.parse(resp.headers['x-pagination']);
-          console.log(pageHeaders);
           setPageState({
             currentPage: pageHeaders['page'],
             totalPages: pageHeaders['last_page'],
@@ -123,7 +123,7 @@ const ItemList = (props:props) => {
       <div>
         <button
           style={{
-            "display": pageState.prevButton ? 'block' : 'none'
+            "display": pageState.prevButton ? 'inline-block' : 'none'
           }}
           onClick={handlePrevClick}
         >
@@ -131,7 +131,7 @@ const ItemList = (props:props) => {
         </button>
         <button
           style={{
-            "display": pageState.nextButton ? 'block' : 'none'
+            "display": pageState.nextButton ? 'inline-block' : 'none'
           }}
           onClick={handleNextClick}
         >

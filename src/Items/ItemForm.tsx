@@ -27,6 +27,7 @@ const ItemForm = (props:props) => {
       .then(res => {
         console.log(res);
         reset({});
+        setAppErrors([]);
       })
       .catch(e => {
         console.log(e);
