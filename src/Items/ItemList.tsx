@@ -107,18 +107,19 @@ const ItemList = (props:props) => {
             <th>Product ID</th>
           </tr>
         </thead>
-        <tbody>
-          {loading
-          ? (<p>Loading... </p>)
-          : (items.map((item) => (
+        {loading
+        ? (<p>Loading... </p>)
+        : (<tbody>
+            {items.map((item) => (
               <tr key={item.id}>
                 <td>{item.name}</td>
                 <td>{item.amount}</td>
                 <td>{item.productId}</td>
               </tr>
-            )))
-          }
-        </tbody>
+            ))}
+          </tbody>
+          )
+        }
       </table>
       <div>
         <button

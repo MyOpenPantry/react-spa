@@ -1,23 +1,45 @@
-import { useForm } from "react-hook-form";
+import { useState } from "react"
+import { useForm, Controller, SubmitHandler } from "react-hook-form";
+import AsyncSelect from 'react-select/async';
 import api from '../api';
 
 import { Item } from "./item.interface";
+import { Ingredient } from "../Ingredients/ingredient.interface";
 
 type props = {
     setAppErrors: (errors:string[]) => void
 }
 
-const ItemForm = (props:props) => {
-  // eslint-disable-next-line
-  const { register, reset, handleSubmit, setError, formState: { errors } } = useForm<Item>();
+interface IFormInput {
+  name:string
+  amount:number
+  productId?:number
+  ingredientId?:{label: string; value: number}
+}
 
+const ItemForm = (props:props) => {
+  const methods = useForm<IFormInput>();
+  const { register, control, reset, handleSubmit, setError, formState: { errors } } = methods;
+  const [selectedValue, setSelectedValue] = useState(null);
   const setAppErrors = props.setAppErrors;
 
-  const onSubmit = (data:Item) => {
+  const handleChange = (value:any) => {
+    setSelectedValue(value);
+  }
+
+  const promiseOptions = (inputValue:string) => {
+    const query = (inputValue.length > 0) ? `?name=${inputValue}&page_size=15` : '?page_size=15';
+    return api.get(`ingredients/${query}`).then(resp => resp.data.map((d:Ingredient) => ({
+      "value" : d.id,
+      "label" : d.name
+    })));
+  }
+
+  const onSubmit: SubmitHandler<IFormInput> = data => {
     // TODO fix this. Surely there's a better way to not send unused optional arguments
     let toSend:Item = {name: data.name, amount: data.amount}
     if(data.ingredientId) {
-      toSend.ingredientId = data.ingredientId;
+      toSend.ingredientId = data.ingredientId.value;
     }
     if(data.productId) {
       toSend.productId = data.productId;
@@ -27,6 +49,7 @@ const ItemForm = (props:props) => {
       .then(res => {
         console.log(res);
         reset({});
+        setSelectedValue(null);
         setAppErrors([]);
       })
       .catch(e => {
@@ -74,9 +97,21 @@ const ItemForm = (props:props) => {
           <input type="number" {...register("productId", {maxLength: 12, min: 0, required: false})} />
           {errors.productId && <span style={{'color':'red'}}>{errors.productId.message}</span>}
           {/* TODO ingredient id will be a dropdown or search */}
-          <label>Ingredient ID</label>
-          <input type="number" {...register("ingredientId", {min: 0, required: false})} />
-          {errors.ingredientId && <span style={{'color':'red'}}>{errors.ingredientId.message}</span>}
+          <label>Ingredient</label>
+          <Controller
+            name="ingredientId"
+            control={control}
+            render={({ field }) => <AsyncSelect 
+              {...field}
+              cacheOptions
+              // @ts-ignore
+              loadOptions={promiseOptions}
+              defaultOptions
+              isClearable
+              onChange={handleChange}
+              value={selectedValue}
+            />}
+          />
           <input type="submit" value="Submit" />
         </form>
       </div>
