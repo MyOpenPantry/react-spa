@@ -3,9 +3,15 @@ import api from '../api';
 
 import { Item } from "./item.interface";
 
-const ItemForm = () => {
+type props = {
+    setAppErrors: (errors:string[]) => void
+}
+
+const ItemForm = (props:props) => {
   // eslint-disable-next-line
   const { register, reset, handleSubmit, setError, formState: { errors } } = useForm<Item>();
+
+  const setAppErrors = props.setAppErrors;
 
   const onSubmit = (data:Item) => {
     // TODO fix this. Surely there's a better way to not send unused optional arguments
@@ -37,11 +43,11 @@ const ItemForm = () => {
           }
         } else {
           // TODO more robust handling
-          /*const error = 
+          const error = 
           e.response.status === 404
             ? 'Resource Not Found'
-            : 'An unexpected error has occured';*/
-          //setAppErrors([error]);
+            : 'An unexpected error has occured';
+          setAppErrors([error]);
         }
       });
   };

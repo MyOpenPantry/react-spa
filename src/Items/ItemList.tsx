@@ -6,14 +6,18 @@ import { Item } from "./item.interface";
 
 const defaultItemLists:Readonly<Item>[] = [];
 
-const ItemList = () => {
+type props = {
+  setAppErrors: (errors:string[]) => void
+}
+
+const ItemList = (props:props) => {
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState(defaultItemLists);
   const [queryString, setQueryString] = useState('');
   const [cancel, setCancel] = useState(axios.CancelToken.source());
-  const [pageState, setPageState] = useState({currentPage: 1, totalPages: 1});
-  const [prevButton, setPrevButton] = useState(false);
-  const [nextButton, setNextButton] = useState(false);
+  const [pageState, setPageState] = useState({currentPage: 1, totalPages: 1, prevButton: false, nextButton: false});
+
+  const setAppErrors = props.setAppErrors;
 
   const handleOnInputChange = (event:ChangeEvent<HTMLInputElement>) => {
     const arg = event.target.value;
@@ -63,7 +67,9 @@ const ItemList = () => {
           console.log(pageHeaders);
           setPageState({
             currentPage: pageHeaders['page'],
-            totalPages: pageHeaders['last_page']
+            totalPages: pageHeaders['last_page'],
+            prevButton: pageHeaders['page'] > 1,
+            nextButton: pageHeaders['page'] < pageHeaders['last_page']
           });
         })
         .catch(e => {
@@ -71,22 +77,17 @@ const ItemList = () => {
             // cancelled from new search input
             return;
           }
-          //const error = 
-          //e.status === 404
-          //  ? 'Resource Not Found'
-          //  : 'An unexpected error has occured';
-          //props.setAppErrors([error]);
+          const error = 
+          e.status === 404
+            ? 'Resource Not Found'
+            : 'An unexpected error has occured';
+          setAppErrors([error]);
           setLoading(false);
         });
     };
 
     fetchItems();
-  }, [cancel.token, pageState.currentPage, queryString]);
-
-  useEffect(() => {
-    setPrevButton(pageState.currentPage > 1);
-    setNextButton(pageState.currentPage < pageState.totalPages)
-  }, [pageState, items])
+  }, [cancel.token, pageState.currentPage, queryString, setAppErrors]);
 
   return (
     <div style={{float: "left"}}>
@@ -122,7 +123,7 @@ const ItemList = () => {
       <div>
         <button
           style={{
-            "display": prevButton ? 'block' : 'none'
+            "display": pageState.prevButton ? 'block' : 'none'
           }}
           onClick={handlePrevClick}
         >
@@ -130,7 +131,7 @@ const ItemList = () => {
         </button>
         <button
           style={{
-            "display": nextButton ? 'block' : 'none'
+            "display": pageState.nextButton ? 'block' : 'none'
           }}
           onClick={handleNextClick}
         >

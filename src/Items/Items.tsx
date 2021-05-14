@@ -1,13 +1,13 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import ItemForm from "./ItemForm";
 import ItemList from "./ItemList";
 
-//const defaultAppErrors:string[] = [];
+const defaultAppErrors:string[] = [];
 
 function Items() {
   // errors not related to the form
-  //const [appErrors, setAppErrors] = useState(defaultAppErrors);
+  const [appErrors, setAppErrors] = useState(defaultAppErrors);
 
   useEffect (() => {
     document.title = `Items`;
@@ -15,18 +15,18 @@ function Items() {
 
   return (
     <main>
-      {/*{appErrors.length > 0 && (
+      {appErrors.length > 0 && (
         <ul>
           {appErrors.map((e) => (
             <li>{e}</li>
           ))}
         </ul>
         )
-      }*/}
+      }
 
-      <ItemList />
+      <ItemList setAppErrors={setAppErrors} />
 
-      <ItemForm />
+      <ItemForm setAppErrors={setAppErrors} />
    </main>
   )
 }
