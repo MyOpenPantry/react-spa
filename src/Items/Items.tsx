@@ -8,11 +8,11 @@ import {
 import ItemForm from "./ItemForm";
 import ItemList from "./ItemList";
 
-const defaultAppErrors:string[] = [];
+const defaultAppMessages:string[] = [];
 
 function Items() {
   // errors not related to the form
-  const [appErrors, setAppErrors] = useState(defaultAppErrors);
+  const [appMessages, setAppMessages] = useState(defaultAppMessages);
   const { path, url } = useRouteMatch();
 
   useEffect (() => {
@@ -21,9 +21,9 @@ function Items() {
 
   return (
     <main>
-      {appErrors.length > 0 && (
+      {appMessages.length > 0 && (
         <ul>
-          {appErrors.map((e) => (
+          {appMessages.map((e) => (
             <li>{e}</li>
           ))}
         </ul>
@@ -35,10 +35,10 @@ function Items() {
       
       <Switch>
         <Route exact path={path}>
-          <ItemList setAppErrors={setAppErrors}/>
+          <ItemList setAppMessages={setAppMessages}/>
         </Route>
         <Route path={`${path}/create`}>
-          <ItemForm setAppErrors={setAppErrors} />
+          <ItemForm setAppMessages={setAppMessages} />
         </Route>
       </Switch>
    </main>

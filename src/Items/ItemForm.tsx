@@ -7,7 +7,7 @@ import { Item } from "./item.interface";
 import { Ingredient } from "../Ingredients/ingredient.interface";
 
 type props = {
-    setAppErrors: (errors:string[]) => void
+    setAppMessages: (errors:string[]) => void
 }
 
 interface IFormInput {
@@ -21,20 +21,20 @@ const ItemForm = (props:props) => {
   const methods = useForm<IFormInput>();
   const { register, control, reset, handleSubmit, setError, formState: { errors } } = methods;
   const [selectedValue, setSelectedValue] = useState(null);
-  const setAppErrors = props.setAppErrors;
+  const setAppMessages = props.setAppMessages;
 
   const handleChange = (value:any) => {
     setSelectedValue(value);
   }
 
-  const promiseOptions = (inputValue:string) => {
+  const promiseOptions = async (inputValue:string) => {
     const query = (inputValue.length > 0) ? `?name=${inputValue}` : '';
-    return api.get(`ingredients/${query}`)
-      .then(resp => resp.data.map((d:Ingredient) => ({
-        "value" : d.id,
-        "label" : d.name
-      })
-    ));
+    const resp = await api.get(`ingredients/${query}`);
+    return resp.data.map((d: Ingredient) => ({
+      "value": d.id,
+      "label": d.name
+    })
+    );
   }
 
   const onSubmit: SubmitHandler<IFormInput> = data => {
@@ -52,7 +52,7 @@ const ItemForm = (props:props) => {
         console.log(res);
         reset({});
         setSelectedValue(null);
-        setAppErrors([]);
+        setAppMessages(["Item succesfully created"]);
       })
       .catch(e => {
         console.log(e);
@@ -73,7 +73,7 @@ const ItemForm = (props:props) => {
           e.response.status === 404
             ? 'Resource Not Found'
             : 'An unexpected error has occured';
-          setAppErrors([error]);
+          setAppMessages([error]);
         }
       });
   };
@@ -106,7 +106,6 @@ const ItemForm = (props:props) => {
             render={({ field }) => <AsyncSelect 
               {...field}
               cacheOptions
-              // @ts-ignore
               loadOptions={promiseOptions}
               defaultOptions
               isClearable

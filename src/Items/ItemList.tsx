@@ -7,7 +7,7 @@ import { Item } from "./item.interface";
 const defaultItemLists:Readonly<Item>[] = [];
 
 type props = {
-  setAppErrors: (errors:string[]) => void
+  setAppMessages: (errors:string[]) => void
 }
 
 const ItemList = (props:props) => {
@@ -17,7 +17,7 @@ const ItemList = (props:props) => {
   const [cancel, setCancel] = useState(axios.CancelToken.source());
   const [pageState, setPageState] = useState({currentPage: 1, totalPages: 1, prevButton: false, nextButton: false});
 
-  const setAppErrors = props.setAppErrors;
+  const setAppMessages = props.setAppMessages;
 
   const handleOnInputChange = (event:ChangeEvent<HTMLInputElement>) => {
     const arg = event.target.value;
@@ -61,7 +61,7 @@ const ItemList = (props:props) => {
         cancelToken: cancel.token,
       })
         .then(resp => {
-          setAppErrors([]);
+          setAppMessages([]);
           setLoading(false);
           setItems(resp.data);
           const pageHeaders = JSON.parse(resp.headers['x-pagination']);
@@ -83,13 +83,13 @@ const ItemList = (props:props) => {
           : e.status === 404
             ? 'Resource Not Found'
             : 'An unexpected error has occured';
-          setAppErrors([error]);
+          setAppMessages([error]);
           setLoading(false);
         });
     };
 
     fetchItems();
-  }, [cancel.token, pageState.currentPage, queryString, setAppErrors]);
+  }, [cancel.token, pageState.currentPage, queryString, setAppMessages]);
 
   return (
     <div style={{float: "left"}}>
