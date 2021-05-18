@@ -12,6 +12,7 @@ const defaultAppMessages:string[] = [];
 function Items() {
   // errors not related to the form
   const [appMessages, setAppMessages] = useState(defaultAppMessages);
+  // eslint-disable-next-line
   const { path, url } = useRouteMatch();
 
   useEffect (() => {
@@ -28,7 +29,7 @@ function Items() {
         </ul>
         )
       }
-      
+
       <Switch>
         <Route exact path={path}>
           <ItemList setAppMessages={setAppMessages}/>

@@ -26,10 +26,10 @@ const ItemList = (props:props) => {
       ? ''
       : (/^\d+$/.test(arg) ? '?productId=' : '?name=' ) + arg;
     setQueryString(query);
-    setPageState({
+    /*setPageState({
       ...pageState,
       currentPage: 1,
-    })
+    })*/
     if (cancel) {
       cancel.cancel();
     }
@@ -126,18 +126,15 @@ const ItemList = (props:props) => {
       }
       <div>
         <button
-          style={{
-            "display": pageState.prevButton ? 'inline-block' : 'none'
-          }}
           onClick={handlePrevClick}
+          disabled={!pageState.prevButton}
         >
           Prev 
         </button>
+        &nbsp;
         <button
-          style={{
-            "display": pageState.nextButton ? 'inline-block' : 'none'
-          }}
           onClick={handleNextClick}
+          disabled={!pageState.nextButton}
         >
           Next
         </button>
