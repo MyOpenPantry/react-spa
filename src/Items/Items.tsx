@@ -3,7 +3,6 @@ import {
   useRouteMatch,
   Switch,
   Route,
-  Link,
 } from "react-router-dom";
 import ItemForm from "./ItemForm";
 import ItemList from "./ItemList";
@@ -29,9 +28,6 @@ function Items() {
         </ul>
         )
       }
-
-      <Link to={`${url}`}>List</Link>
-      <Link to={`${url}/create`}>Create</Link>
       
       <Switch>
         <Route exact path={path}>

@@ -26,6 +26,9 @@ function AppRouter() {
             </li>
             <li>
               <Link to="/items">Items</Link>
+              <ul>
+                <li><Link to="/items/create">Create</Link></li>
+              </ul>
             </li>
             <li>
               <Link to="/recipes">Recipes</Link>

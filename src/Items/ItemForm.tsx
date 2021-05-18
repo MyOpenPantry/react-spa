@@ -79,7 +79,7 @@ const ItemForm = (props:props) => {
   };
 
   return (
-      <div style={{float: "right"}}>
+      <div>
         <h1>Add New Item</h1>
         <form onSubmit={handleSubmit(onSubmit)}>
           <label>Item Name</label>

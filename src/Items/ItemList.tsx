@@ -92,7 +92,7 @@ const ItemList = (props:props) => {
   }, [cancel.token, pageState.currentPage, queryString, setAppMessages]);
 
   return (
-    <div style={{float: "left"}}>
+    <div>
       <h1>Items</h1>
       <label htmlFor="search-input">
         <input
