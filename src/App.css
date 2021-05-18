@@ -1,0 +1,20 @@
+.tableButton {
+    /* reset */
+    border: none;
+    margin: 0;
+    padding: 0;
+    font-size: 100%;
+    font-weight: 100%;
+    background: none;
+
+    /* style like an anchor */
+    color: var(--color);
+    display: inline-block;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.tableButton:hover {
+    filter: brightness(var(--hover-brightness));
+    text-decoration: underline;
+  }

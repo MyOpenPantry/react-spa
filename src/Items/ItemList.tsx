@@ -5,12 +5,14 @@ import api from '../api';
 import { Item } from "./item.interface";
 
 const defaultItemLists:Readonly<Item>[] = [];
+const defaultItem:Item = {name:'', amount:0}
 
 type props = {
   setAppMessages: (errors:string[]) => void
 }
 
 const ItemList = (props:props) => {
+  const [selectedItem, setSelectedItem] = useState(defaultItem);
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState(defaultItemLists);
   const [queryString, setQueryString] = useState('');
@@ -104,27 +106,42 @@ const ItemList = (props:props) => {
       {loading
         ? (<p>Loading...</p>)
         : (
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Amount</th>
-                <th>Product ID</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item) => (
-                <tr key={item.id}>
-                  <td>{item.name}</td>
-                  <td>{item.amount}</td>
-                  <td>{item.productId}</td>
+          <div>
+            <table style={{"float":"left"}}>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Amount</th>
+                  <th>Product ID</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {items.map((item) => (
+                  <tr key={item.id}>
+                    <td>
+                      <button
+                        onClick={() => setSelectedItem(item)}
+                        className="tableButton"
+                      >
+                        {item.name}
+                      </button>
+                    </td>
+                    <td>{item.amount}</td>
+                    <td>{item.productId}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div style={{"float":"right"}}>
+              {selectedItem !== defaultItem
+                ? <SelectedItem item={selectedItem} closeCallback={() => setSelectedItem(defaultItem)} />
+                : ''
+              }
+            </div>
+          </div>
         )
       }
-      <div>
+      <div style={{"clear":"both"}}>
         <button
           onClick={handlePrevClick}
           disabled={!pageState.prevButton}
@@ -140,6 +157,29 @@ const ItemList = (props:props) => {
         </button>
       </div>
     </div>
+  )
+}
+
+const SelectedItem = (props:{item:Item, closeCallback:any}) => {
+  const item = props.item;
+  const closeCallback = props.closeCallback;
+  return (
+    <section>
+      <aside>
+        <h1>{item.name}</h1>
+        <p>Amount: {item.amount}</p>
+        <p>ProductId: {item.productId}</p>
+        <p>IngredientId: {item.ingredientId}</p>
+        <p>Last Updated: {item.updatedAt}</p>
+        <button>
+          Edit 
+        </button>
+        &nbsp;
+        <button onClick={() => closeCallback()}>
+          Close
+        </button>
+      </aside>
+    </section>
   )
 }
 
