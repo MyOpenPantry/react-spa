@@ -28,11 +28,13 @@ const ItemForm = (props:props) => {
   }
 
   const promiseOptions = (inputValue:string) => {
-    const query = (inputValue.length > 0) ? `?name=${inputValue}&page_size=15` : '?page_size=15';
-    return api.get(`ingredients/${query}`).then(resp => resp.data.map((d:Ingredient) => ({
-      "value" : d.id,
-      "label" : d.name
-    })));
+    const query = (inputValue.length > 0) ? `?name=${inputValue}` : '';
+    return api.get(`ingredients/${query}`)
+      .then(resp => resp.data.map((d:Ingredient) => ({
+        "value" : d.id,
+        "label" : d.name
+      })
+    ));
   }
 
   const onSubmit: SubmitHandler<IFormInput> = data => {
@@ -112,6 +114,7 @@ const ItemForm = (props:props) => {
               value={selectedValue}
             />}
           />
+          <br />
           <input type="submit" value="Submit" />
         </form>
       </div>

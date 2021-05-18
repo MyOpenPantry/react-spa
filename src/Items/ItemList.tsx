@@ -77,8 +77,10 @@ const ItemList = (props:props) => {
             // cancelled from new search input
             return;
           }
-          const error = 
-          e.status === 404
+          const error =
+          !e.status
+          ? 'Network Error'
+          : e.status === 404
             ? 'Resource Not Found'
             : 'An unexpected error has occured';
           setAppErrors([error]);
@@ -99,28 +101,29 @@ const ItemList = (props:props) => {
           onChange={handleOnInputChange}
         />
       </label>
-      <table>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Amount</th>
-            <th>Product ID</th>
-          </tr>
-        </thead>
-        {loading
-        ? (<p>Loading... </p>)
-        : (<tbody>
-            {items.map((item) => (
-              <tr key={item.id}>
-                <td>{item.name}</td>
-                <td>{item.amount}</td>
-                <td>{item.productId}</td>
+      {loading
+        ? (<p>Loading...</p>)
+        : (
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Amount</th>
+                <th>Product ID</th>
               </tr>
-            ))}
-          </tbody>
-          )
-        }
-      </table>
+            </thead>
+            <tbody>
+              {items.map((item) => (
+                <tr key={item.id}>
+                  <td>{item.name}</td>
+                  <td>{item.amount}</td>
+                  <td>{item.productId}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )
+      }
       <div>
         <button
           style={{

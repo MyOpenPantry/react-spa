@@ -35,9 +35,9 @@ function AppRouter() {
 
         <Switch>
           <Route exact path='/' component={Home} />
-          <Route exact path='/ingredients' component={Ingredients} />
-          <Route exact path='/items' component={Items} />
-          <Route exact path='/recipes' component={Recipes} />
+          <Route path='/ingredients' component={Ingredients} />
+          <Route path='/items' component={Items} />
+          <Route path='/recipes' component={Recipes} />
         </Switch>
       </div>
     </Router>
