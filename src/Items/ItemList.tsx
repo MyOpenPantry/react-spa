@@ -25,16 +25,19 @@ const ItemList = (props:props) => {
 
   const handleOnInputChange = (event:ChangeEvent<HTMLInputElement>) => {
     const arg = event.target.value;
-    // TODO currently assumes any arg of only integers means the user wants to search for a productID
+    // TODO currently assumes any arg of only integers means the user wants to search for a productID, otherwise name
+    // maybe make the user explicitly choose?
     const query = (arg.length === 0)
       ? ''
       : (/^\d+$/.test(arg) ? '?productId=' : '?name=' ) + arg;
     setQueryString(query);
+
     // return to page 1 whenever the input changes, otherwise the query will use the current page (which may be empty)
     setPageState({
       ...pageState,
       currentPage: 1,
     })
+
     if (cancel) {
       cancel.cancel();
     }
@@ -42,6 +45,12 @@ const ItemList = (props:props) => {
   }
 
   const handlePageClick = (amount:number) => {
+    // cancel previous requests, otherwise clicking too fast can cause it to loop between 2 pages
+    if (cancel) {
+      cancel.cancel();
+    }
+    setCancel(axios.CancelToken.source());
+
     // update currentPage to fire off a new fetchItems() call
     setPageState({
       ...pageState,
@@ -205,13 +214,17 @@ const SelectedItem = (props:{item:Item, closeCallback:any, deleteCallback:any}) 
     const date = new Date(input);
     return date.toLocaleString();
   }
+
   return (
     <section>
       <aside>
         <h1>{item.name}</h1>
         <p>Amount: {item.amount}</p>
         <p>ProductId: {item.productId ? item.productId : 'None'}</p>
-        <p>IngredientId: {item.ingredientId ? item.ingredientId : 'None'}</p>
+        <p>Ingredient: {item.ingredient 
+          ? <Link to={`ingredients/${item.ingredient.id}`}>{item.ingredient.name}</Link>
+          : 'None'}
+        </p>
         <p>Last Updated: {getDateString(item.updatedAt as string)}</p>
 
         <Link to={`${url}/edit/${item.id}`}>Edit</Link>
