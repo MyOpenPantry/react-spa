@@ -2,6 +2,8 @@ import React, { useState, useEffect, ChangeEvent, SyntheticEvent } from 'react';
 import axios from 'axios';
 import api from '../api';
 
+import {Link, useRouteMatch} from 'react-router-dom';
+
 import { Item } from "./item.interface";
 
 const defaultItemLists:Readonly<Item>[] = [];
@@ -107,32 +109,49 @@ const ItemList = (props:props) => {
         ? (<p>Loading...</p>)
         : (
           <div>
-            <table style={{"float":"left"}}>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Amount</th>
-                  <th>Product ID</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item) => (
-                  <tr key={item.id}>
-                    <td>
-                      <button
-                        onClick={() => setSelectedItem(item)}
-                        className="tableButton"
-                      >
-                        {item.name}
-                      </button>
-                    </td>
-                    <td>{item.amount}</td>
-                    <td>{item.productId}</td>
+            <div>
+              <table style={{"float":"left"}}>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Amount</th>
+                    <th>Product ID</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-            <div style={{"float":"right"}}>
+                </thead>
+                <tbody>
+                  {items.map((item) => (
+                    <tr key={item.id}>
+                      <td>
+                        <button
+                          onClick={() => setSelectedItem(item)}
+                          className="disguisedButton"
+                        >
+                          {item.name}
+                        </button>
+                      </td>
+                      <td>{item.amount}</td>
+                      <td>{item.productId}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div style={{"float":"left", "clear":"both"}}>
+                <button
+                  onClick={handlePrevClick}
+                  disabled={!pageState.prevButton}
+                >
+                  Prev 
+                </button>
+                &nbsp;
+                <button
+                  onClick={handleNextClick}
+                  disabled={!pageState.nextButton}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+            <div>
               {selectedItem !== defaultItem
                 ? <SelectedItem item={selectedItem} closeCallback={() => setSelectedItem(defaultItem)} />
                 : ''
@@ -141,21 +160,6 @@ const ItemList = (props:props) => {
           </div>
         )
       }
-      <div style={{"clear":"both"}}>
-        <button
-          onClick={handlePrevClick}
-          disabled={!pageState.prevButton}
-        >
-          Prev 
-        </button>
-        &nbsp;
-        <button
-          onClick={handleNextClick}
-          disabled={!pageState.nextButton}
-        >
-          Next
-        </button>
-      </div>
     </div>
   )
 }
@@ -163,6 +167,8 @@ const ItemList = (props:props) => {
 const SelectedItem = (props:{item:Item, closeCallback:any}) => {
   const item = props.item;
   const closeCallback = props.closeCallback;
+  // eslint-disable-next-line
+  let { path, url } = useRouteMatch();
   return (
     <section>
       <aside>
@@ -171,11 +177,10 @@ const SelectedItem = (props:{item:Item, closeCallback:any}) => {
         <p>ProductId: {item.productId}</p>
         <p>IngredientId: {item.ingredientId}</p>
         <p>Last Updated: {item.updatedAt}</p>
-        <button>
-          Edit 
-        </button>
+
+        <Link to={`${url}/edit/${item.id}`}>Edit</Link>
         &nbsp;
-        <button onClick={() => closeCallback()}>
+        <button onClick={() => closeCallback()} className="disguisedButton">
           Close
         </button>
       </aside>

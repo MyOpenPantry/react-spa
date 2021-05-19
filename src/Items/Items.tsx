@@ -4,6 +4,7 @@ import {
   Switch,
   Route,
 } from "react-router-dom";
+import ItemEdit from './ItemEdit';
 import ItemForm from "./ItemForm";
 import ItemList from "./ItemList";
 
@@ -36,6 +37,9 @@ function Items() {
         </Route>
         <Route path={`${path}/create`}>
           <ItemForm setAppMessages={setAppMessages} />
+        </Route>
+        <Route path={`${path}/edit/:id`}>
+          <ItemEdit setAppMessages={setAppMessages} />
         </Route>
       </Switch>
    </main>

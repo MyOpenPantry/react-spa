@@ -10,17 +10,17 @@ type props = {
     setAppMessages: (errors:string[]) => void
 }
 
-interface IFormInput {
-  name:string
-  amount:number
-  productId?:number
-  ingredientId?:{label: string; value: number}
+interface dropdownValue {
+  label?:string;
+  value?:number;
 }
 
+const defaultValue:dropdownValue = {};
+
 const ItemForm = (props:props) => {
-  const methods = useForm<IFormInput>();
+  const methods = useForm<Item>();
   const { register, control, reset, handleSubmit, setError, formState: { errors } } = methods;
-  const [selectedValue, setSelectedValue] = useState(null);
+  const [selectedValue, setSelectedValue] = useState(defaultValue);
   const setAppMessages = props.setAppMessages;
 
   const handleChange = (value:any) => {
@@ -31,17 +31,18 @@ const ItemForm = (props:props) => {
     const query = (inputValue.length > 0) ? `?name=${inputValue}` : '';
     const resp = await api.get(`ingredients/${query}`);
     return resp.data.map((d: Ingredient) => ({
-      "value": d.id,
-      "label": d.name
-    })
+        "value": d.id,
+        "label": d.name
+      })
     );
   }
 
-  const onSubmit: SubmitHandler<IFormInput> = data => {
+  const onSubmit: SubmitHandler<Item> = data => {
     // TODO fix this. Surely there's a better way to not send unused optional arguments
+    console.log(data);
     let toSend:Item = {name: data.name, amount: data.amount}
     if(data.ingredientId) {
-      toSend.ingredientId = data.ingredientId.value;
+      toSend.ingredientId = data.ingredientId;
     }
     if(data.productId) {
       toSend.productId = data.productId;
@@ -51,7 +52,7 @@ const ItemForm = (props:props) => {
       .then(res => {
         console.log(res);
         reset({});
-        setSelectedValue(null);
+        setSelectedValue({});
         setAppMessages(["Item succesfully created"]);
       })
       .catch(e => {
@@ -62,7 +63,6 @@ const ItemForm = (props:props) => {
           const respError = e.response.data.errors.json;
 
           for (const [k,] of Object.entries(toSend)) {
-            console.log(k)
             if (k in respError) {
               setError(k as any, {type:'resp', message: respError[k][0]}, {shouldFocus: true})
             }
@@ -109,7 +109,14 @@ const ItemForm = (props:props) => {
               loadOptions={promiseOptions}
               defaultOptions
               isClearable
-              onChange={handleChange}
+              // TODO this doesn't feel right
+              // handleChange 'sets' the value, but actually doesn't unless field.onChange is used?
+              // handleChange exists so I can have setSelectedValue to clear the form on submit
+              // I really need to just sit down and read all the docs THOROUGHLY...
+              onChange={val => {
+                handleChange(val);
+                return field.onChange(val?.value)
+              }}
               value={selectedValue}
             />}
           />

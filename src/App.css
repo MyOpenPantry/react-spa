@@ -1,4 +1,4 @@
-.tableButton {
+.disguisedButton {
     /* reset */
     border: none;
     margin: 0;
@@ -14,7 +14,7 @@
     text-decoration: none;
 }
 
-.tableButton:hover {
+.disguisedButton:hover {
     filter: brightness(var(--hover-brightness));
     text-decoration: underline;
   }
