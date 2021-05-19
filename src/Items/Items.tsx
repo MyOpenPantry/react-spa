@@ -7,6 +7,7 @@ import {
 import ItemEdit from './ItemEdit';
 import ItemForm from "./ItemForm";
 import ItemList from "./ItemList";
+import ItemSingle from './ItemSingle';
 
 const defaultAppMessages:string[] = [];
 
@@ -40,6 +41,9 @@ function Items() {
         </Route>
         <Route path={`${path}/edit/:id`}>
           <ItemEdit setAppMessages={setAppMessages} />
+        </Route>
+        <Route path={`${path}/:id`}>
+          <ItemSingle />
         </Route>
       </Switch>
    </main>

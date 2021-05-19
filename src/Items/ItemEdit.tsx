@@ -79,9 +79,8 @@ const ItemEdit = (props:props) => {
       if (item.productId) {
         setValue('productId', item.productId)
       }
-      if (item.ingredientId !== undefined) {
-        const ingredient = await api.get(`ingredients/${item.ingredientId}`).then(resp => resp.data);
-        setValue('ingredientId', {label: ingredient.name, value:ingredient.id});
+      if (item.ingredientId) {
+        setValue('ingredientId', {label: item.ingredient.name, value:item.ingredient.id});
       }
       setLoading(false);
     }

@@ -227,6 +227,8 @@ const SelectedItem = (props:{item:Item, closeCallback:any, deleteCallback:any}) 
         </p>
         <p>Last Updated: {getDateString(item.updatedAt as string)}</p>
 
+        <Link to={`${url}/${item.id}`}>View</Link>
+        &nbsp;
         <Link to={`${url}/edit/${item.id}`}>Edit</Link>
         &nbsp;
         <button onClick={() => closeCallback()} className="disguisedButton">
