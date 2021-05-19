@@ -59,6 +59,31 @@ const ItemList = (props:props) => {
     handlePageClick(-1);
   }
 
+  const handleDelete = async (item:Item) => {
+    const confirm = window.confirm(`Delete Item "${item.name}"?`);
+    // send a get request to obtain the item's etag
+    const resp = await api.get(`items/${item.id}`);
+    if (resp.status !== 200) {
+      setAppMessages(["There was an error retrieving the item's etag"]);
+      return;
+    }
+    const etag = resp.headers?.etag;
+
+    if (!confirm) {
+      return;
+    }
+
+    const delResp = await api.delete(`items/${item.id}`, {headers:{"If-Match":etag}});
+    if (delResp.status === 204) {
+      setAppMessages(["Item was successfully deleted"]);
+      setSelectedItem(defaultItem);
+      // remove the item from the list (if it exists), otherwise it will still be there after deletion
+      setItems(items.filter((i:Item) => i.id !== item.id));
+    } else {
+      setAppMessages(["There was an error deleting the item"]);
+    }
+  }
+
   useEffect (() => {
     const fetchItems = () => {
       const url = `items/${queryString}${pageState.currentPage > 1 ? `${queryString.length > 0 ? '&' : '?'}page=${pageState.currentPage}&page_size=10` : ''}`;
@@ -154,7 +179,11 @@ const ItemList = (props:props) => {
             </div>
             <div>
               {selectedItem !== defaultItem
-                ? <SelectedItem item={selectedItem} closeCallback={() => setSelectedItem(defaultItem)} />
+                ? <SelectedItem 
+                    item={selectedItem}
+                    closeCallback={() => setSelectedItem(defaultItem)}
+                    deleteCallback={(i:Item) => handleDelete(i)}
+                  />
                 : ''
               }
             </div>
@@ -165,11 +194,13 @@ const ItemList = (props:props) => {
   )
 }
 
-const SelectedItem = (props:{item:Item, closeCallback:any}) => {
+const SelectedItem = (props:{item:Item, closeCallback:any, deleteCallback:any}) => {
   const item = props.item;
   const closeCallback = props.closeCallback;
+  const deleteCallback = props.deleteCallback;
   // eslint-disable-next-line
   let { path, url } = useRouteMatch();
+
   const getDateString = (input:string) => {
     const date = new Date(input);
     return date.toLocaleString();
@@ -179,14 +210,18 @@ const SelectedItem = (props:{item:Item, closeCallback:any}) => {
       <aside>
         <h1>{item.name}</h1>
         <p>Amount: {item.amount}</p>
-        <p>ProductId: {item.productId}</p>
-        <p>IngredientId: {item.ingredientId}</p>
+        <p>ProductId: {item.productId ? item.productId : 'None'}</p>
+        <p>IngredientId: {item.ingredientId ? item.ingredientId : 'None'}</p>
         <p>Last Updated: {getDateString(item.updatedAt as string)}</p>
 
         <Link to={`${url}/edit/${item.id}`}>Edit</Link>
         &nbsp;
         <button onClick={() => closeCallback()} className="disguisedButton">
           Close
+        </button>
+        &nbsp;
+        <button onClick={() => deleteCallback(item)} className="disguisedButton" style={{"color":"red", "float":"right"}}>
+          Delete
         </button>
       </aside>
     </section>

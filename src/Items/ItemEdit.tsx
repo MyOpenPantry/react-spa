@@ -40,11 +40,7 @@ const ItemEdit = (props:props) => {
       toSend.productId = data.productId;
     }
 
-    api.put(`items/${id}`, toSend, {
-      headers: {
-        "If-Match":etag,
-      }
-    })
+    api.put(`items/${id}`, toSend, {headers:{"If-Match":etag}})
       .then(resp => {
         console.log(resp);
         setAppMessages(["Item succesfully updated"]);
