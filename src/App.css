@@ -1,3 +1,27 @@
+:root {
+    --color-success: #20c997;
+    --color-success-accent: #28a7451b;
+    --color-error: #dc3545;
+    --color-error-accent: #dc35450b;
+    --color-warn: #ffc107;
+    --color-warn-accent: #ffc1070b;
+}
+
+.messageSuccess {
+    background-color: var(--color-success-accent);
+    border-left: 4px solid var(--color-success);
+}
+
+.messageError {
+    background-color: var(--color-error-accent);
+    border-left: 4px solid var(--color-error);
+}
+
+.messageWarn {
+    background-color: var(--color-error-accent);
+    border-left: 4px solid var(--color-error);
+}
+
 .disguisedButton {
     /* reset */
     border: none;
