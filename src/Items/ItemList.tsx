@@ -30,10 +30,11 @@ const ItemList = (props:props) => {
       ? ''
       : (/^\d+$/.test(arg) ? '?productId=' : '?name=' ) + arg;
     setQueryString(query);
-    /*setPageState({
+    // return to page 1 whenever the input changes, otherwise the query will use the current page (which may be empty)
+    setPageState({
       ...pageState,
       currentPage: 1,
-    })*/
+    })
     if (cancel) {
       cancel.cancel();
     }
@@ -169,6 +170,10 @@ const SelectedItem = (props:{item:Item, closeCallback:any}) => {
   const closeCallback = props.closeCallback;
   // eslint-disable-next-line
   let { path, url } = useRouteMatch();
+  const getDateString = (input:string) => {
+    const date = new Date(input);
+    return date.toLocaleString();
+  }
   return (
     <section>
       <aside>
@@ -176,7 +181,7 @@ const SelectedItem = (props:{item:Item, closeCallback:any}) => {
         <p>Amount: {item.amount}</p>
         <p>ProductId: {item.productId}</p>
         <p>IngredientId: {item.ingredientId}</p>
-        <p>Last Updated: {item.updatedAt}</p>
+        <p>Last Updated: {getDateString(item.updatedAt as string)}</p>
 
         <Link to={`${url}/edit/${item.id}`}>Edit</Link>
         &nbsp;

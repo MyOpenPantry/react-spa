@@ -4,5 +4,5 @@ export interface Item {
   amount: number;
   productId?: number;
   ingredientId?: number;
-  updatedAt?: Date;
+  updatedAt?: string;
 }
