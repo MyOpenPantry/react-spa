@@ -9,9 +9,14 @@ import ItemForm from "./ItemForm";
 import ItemList from "./ItemList";
 import ItemSingle from './ItemSingle';
 
+interface appMessage {
+  className: string;
+  message: string;
+}
+
 function Items() {
   // messages passed by children
-  const [appMessage, setAppMessage] = useState<{className:string, message:string}|undefined>(undefined);
+  const [appMessage, setAppMessage] = useState<appMessage>();
   // eslint-disable-next-line
   const { path, url } = useRouteMatch();
 
@@ -21,7 +26,7 @@ function Items() {
 
   return (
     <main>
-      {appMessage !== undefined && <article><aside className={appMessage?.className}><p>{appMessage?.message}</p></aside></article>}
+      {appMessage && <article><aside className={appMessage.className}><p>{appMessage.message}</p></aside></article>}
 
       <Switch>
         <Route exact path={path}>
