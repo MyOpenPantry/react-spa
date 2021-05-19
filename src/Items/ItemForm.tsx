@@ -1,31 +1,21 @@
-import { useState } from "react"
 import { useForm, Controller, SubmitHandler } from "react-hook-form";
 import AsyncSelect from 'react-select/async';
 import api from '../api';
 
 import { Item } from "./item.interface";
+import { IFormInput } from "./itemform.interface";
 import { Ingredient } from "../Ingredients/ingredient.interface";
 
 type props = {
     setAppMessages: (errors:string[]) => void
 }
 
-interface dropdownValue {
-  label?:string;
-  value?:number;
-}
-
-const defaultValue:dropdownValue = {};
-
 const ItemForm = (props:props) => {
-  const methods = useForm<Item>();
+  const methods = useForm<IFormInput>({
+    defaultValues:{name:'', amount:1, productId:null, ingredientId:null}
+  });
   const { register, control, reset, handleSubmit, setError, formState: { errors } } = methods;
-  const [selectedValue, setSelectedValue] = useState(defaultValue);
   const setAppMessages = props.setAppMessages;
-
-  const handleChange = (value:any) => {
-    setSelectedValue(value);
-  }
 
   const promiseOptions = async (inputValue:string) => {
     const query = (inputValue.length > 0) ? `?name=${inputValue}` : '';
@@ -37,12 +27,12 @@ const ItemForm = (props:props) => {
     );
   }
 
-  const onSubmit: SubmitHandler<Item> = data => {
+  const onSubmit: SubmitHandler<IFormInput> = data => {
     // TODO fix this. Surely there's a better way to not send unused optional arguments
     console.log(data);
     let toSend:Item = {name: data.name, amount: data.amount}
     if(data.ingredientId) {
-      toSend.ingredientId = data.ingredientId;
+      toSend.ingredientId = data.ingredientId.value;
     }
     if(data.productId) {
       toSend.productId = data.productId;
@@ -51,8 +41,7 @@ const ItemForm = (props:props) => {
     api.post('items/', toSend)
       .then(res => {
         console.log(res);
-        reset({});
-        setSelectedValue({});
+        reset({name:'', amount:1, productId:null, ingredientId:null});
         setAppMessages(["Item succesfully created"]);
       })
       .catch(e => {
@@ -103,21 +92,13 @@ const ItemForm = (props:props) => {
           <Controller
             name="ingredientId"
             control={control}
+            defaultValue
             render={({ field }) => <AsyncSelect 
               {...field}
               cacheOptions
               loadOptions={promiseOptions}
               defaultOptions
               isClearable
-              // TODO this doesn't feel right
-              // handleChange 'sets' the value, but actually doesn't unless field.onChange is used?
-              // handleChange exists so I can have setSelectedValue to clear the form on submit
-              // I really need to just sit down and read all the docs THOROUGHLY...
-              onChange={val => {
-                handleChange(val);
-                return field.onChange(val?.value)
-              }}
-              value={selectedValue}
             />}
           />
           <br />

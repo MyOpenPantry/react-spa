@@ -11,7 +11,7 @@ import ItemList from "./ItemList";
 const defaultAppMessages:string[] = [];
 
 function Items() {
-  // errors not related to the form
+  // messages passed by children
   const [appMessages, setAppMessages] = useState(defaultAppMessages);
   // eslint-disable-next-line
   const { path, url } = useRouteMatch();

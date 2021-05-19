@@ -6,36 +6,19 @@ import api from '../api';
 import {useParams} from 'react-router-dom';
 
 import { Item } from "./item.interface";
+import { IFormInput } from "./itemform.interface";
 import { Ingredient } from "../Ingredients/ingredient.interface";
 
 type props = {
     setAppMessages: (errors:string[]) => void
 }
 
-interface dropdownValue {
-  label?:string;
-  value?:number;
-}
-
-const defaultItem:Item = {name:'', amount:0};
-const defaultIngredient:Ingredient = {name:''}
-const defaultValue:dropdownValue = {};
-
 const ItemEdit = (props:props) => {
-  // @ts-ignore
-  const { id } = useParams();
+  const { id } = useParams<{id: string}>();
+  const { register, control, handleSubmit, setError, setValue, formState: { errors } } =  useForm<IFormInput>();
   const [loading, setLoading] = useState(true);
-  const [item, setItem] = useState(defaultItem);
   const [etag, setEtag] = useState('');
-  const [ingredient, setIngredient] = useState(defaultIngredient);
-  const methods = useForm<Item>();
-  const { register, control, reset, handleSubmit, setError, formState: { errors } } = methods;
-  const [selectedValue, setSelectedValue] = useState(defaultValue);
   const setAppMessages = props.setAppMessages;
-
-  const handleChange = (value:any) => {
-    setSelectedValue(value);
-  }
 
   const promiseOptions = async (inputValue:string) => {
     const query = (inputValue.length > 0) ? `?name=${inputValue}` : '';
@@ -47,11 +30,11 @@ const ItemEdit = (props:props) => {
     );
   }
 
-  const onSubmit: SubmitHandler<Item> = data => {
+  const onSubmit: SubmitHandler<IFormInput> = data => {
     // TODO fix this. Surely there's a better way to not send unused optional arguments
     let toSend:Item = {name: data.name, amount: data.amount}
     if(data.ingredientId) {
-      toSend.ingredientId = data.ingredientId;
+      toSend.ingredientId = data.ingredientId.value;
     }
     if(data.productId) {
       toSend.productId = data.productId;
@@ -62,10 +45,8 @@ const ItemEdit = (props:props) => {
         "If-Match":etag,
       }
     })
-      .then(res => {
-        console.log(res);
-        reset({});
-        setSelectedValue({});
+      .then(resp => {
+        console.log(resp);
         setAppMessages(["Item succesfully updated"]);
       })
       .catch(e => {
@@ -94,68 +75,65 @@ const ItemEdit = (props:props) => {
 
   useEffect(() => {
     async function getItem() {
-      const resp = await api.get('items/'+id);
+      const resp = await api.get(`items/${id}`);
       const item = resp.data;
       setEtag(resp.headers['etag']);
-      if (item.ingredientId !== undefined) {
-        const ingredient = await api.get('ingredients/'+item.ingredientId).then(resp => resp.data);
-        setIngredient(ingredient);
-        setSelectedValue({label: ingredient.name, value:ingredient.id});
-      } else {
-        setSelectedValue({});
+      setValue('name', item.name)
+      setValue('amount', item.amount);
+      if (item.productId) {
+        setValue('productId', item.productId)
       }
-      setItem(item);
+      if (item.ingredientId !== undefined) {
+        const ingredient = await api.get(`ingredients/${item.ingredientId}`).then(resp => resp.data);
+        setValue('ingredientId', {label: ingredient.name, value:ingredient.id});
+      }
       setLoading(false);
     }
 
     getItem();
-  }, [id]);
+  }, [id, setValue]);
 
-  return loading
-        ? (<p>Loading...</p>)
-        : (
-            <div>
-              <h1>Edit Item</h1>
-              <form onSubmit={handleSubmit(onSubmit)}>
-                <label>Item Name</label>
-                <input defaultValue={item.name} {...register("name", { required: true })} />
-                {/* errors will return when field validation fails  */}
-                {errors.name && (
-                  <span style={{'color':'red'}}>
-                    {errors.name.message !== '' ? errors.name.message : 'This field is required'}
-                  </span>
-                )}
-                <label>Amount</label>
-                <input defaultValue={item.amount} type="number" {...register("amount", { required: true })} />
-                {/* errors will return when field validation fails  */}
-                {errors.amount && <span style={{'color':'red'}}>{errors.amount.message || 'This field is required'}</span>}
-                {/* TODO camera support for barcode scanning on the web app? */}
-                <label>Product ID</label>
-                <input defaultValue={item.productId} type="number" {...register("productId", {maxLength: 12, min: 0, required: false})} />
-                {errors.productId && <span style={{'color':'red'}}>{errors.productId.message}</span>}
-                {/* TODO ingredient id will be a dropdown or search */}
-                <label>Ingredient</label>
-                <Controller
-                  name="ingredientId"
-                  control={control}
-                  render={({ field }) => <AsyncSelect 
-                    {...field}
-                    cacheOptions
-                    loadOptions={promiseOptions}
-                    defaultOptions={[{label: ingredient.name, value: ingredient.id}]}
-                    isClearable
-                    onChange={val => {
-                      handleChange(val);
-                      return field.onChange(val?.value)
-                    }}
-                    value={selectedValue}
-                  />}
-                />
-                <br />
-                <input type="submit" value="Submit" />
-              </form>
-            </div>
-        )
+  return (loading
+    ? (<p>Loading...</p>)
+    : (
+        <div>
+          <h1>Edit Item</h1>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <label>Item Name</label>
+            <input {...register("name", { required: true })} />
+            {/* errors will return when field validation fails  */}
+            {errors.name && (
+              <span style={{'color':'red'}}>
+                {errors.name.message !== '' ? errors.name.message : 'This field is required'}
+              </span>
+            )}
+            <label>Amount</label>
+            <input type="number" {...register("amount", { required: true })} />
+            {/* errors will return when field validation fails  */}
+            {errors.amount && <span style={{'color':'red'}}>{errors.amount.message || 'This field is required'}</span>}
+            {/* TODO camera support for barcode scanning on the web app? */}
+            <label>Product ID</label>
+            <input type="number" {...register("productId", {maxLength: 12, min: 0, required: false})} />
+            {errors.productId && <span style={{'color':'red'}}>{errors.productId.message}</span>}
+            {/* TODO ingredient id will be a dropdown or search */}
+            <label>Ingredient</label>
+            <Controller
+              name="ingredientId"
+              control={control}
+              render={({ field }) => <AsyncSelect 
+                {...field}
+                cacheOptions
+                loadOptions={promiseOptions}
+                //defaultOptions={[{label: ingredient.name, value: ingredient.id}]}
+                isClearable
+              />}
+            />
+            <br />
+            <input type="submit" value="Submit" />
+          </form>
+        </div>
+    )
+  )
 };
 
 export default ItemEdit;
