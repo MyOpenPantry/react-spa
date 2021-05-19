@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useForm, Controller, SubmitHandler } from "react-hook-form";
 import AsyncSelect from 'react-select/async';
 import api from '../api';
@@ -7,7 +8,7 @@ import { IFormInput } from "./itemform.interface";
 import { Ingredient } from "../Ingredients/ingredient.interface";
 
 type props = {
-    setAppMessages: (errors:string[]) => void
+    setAppMessage: any
 }
 
 const ItemForm = (props:props) => {
@@ -15,7 +16,7 @@ const ItemForm = (props:props) => {
     defaultValues:{name:'', amount:1, productId:null, ingredientId:null}
   });
   const { register, control, reset, handleSubmit, setError, formState: { errors } } = methods;
-  const setAppMessages = props.setAppMessages;
+  const setAppMessage = props.setAppMessage;
 
   const promiseOptions = async (inputValue:string) => {
     const query = (inputValue.length > 0) ? `?name=${inputValue}` : '';
@@ -42,13 +43,14 @@ const ItemForm = (props:props) => {
       .then(res => {
         console.log(res);
         reset({name:'', amount:1, productId:null, ingredientId:null});
-        setAppMessages(["Item succesfully created"]);
+        setAppMessage({className:"messageSuccess", message:"Item successfully created"});
       })
       .catch(e => {
         console.log(e);
 
-        // Check for input errors here
-        if (e.response.status === 422) {
+        if (!e.response) {
+          setAppMessage({className:"messageError", message:"Network Error"});
+        } else if (e.response.status === 422) {
           const respError = e.response.data.errors.json;
 
           for (const [k,] of Object.entries(toSend)) {
@@ -62,10 +64,15 @@ const ItemForm = (props:props) => {
           e.response.status === 404
             ? 'Resource Not Found'
             : 'An unexpected error has occured';
-          setAppMessages([error]);
+          setAppMessage({className:"messageError", message:error});
         }
       });
   };
+
+  // clear the appMessage on initial load
+  useEffect(() => {
+    setAppMessage(undefined);
+  }, [setAppMessage])
 
   return (
       <div>

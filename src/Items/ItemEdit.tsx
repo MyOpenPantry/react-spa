@@ -10,7 +10,7 @@ import { IFormInput } from "./itemform.interface";
 import { Ingredient } from "../Ingredients/ingredient.interface";
 
 type props = {
-    setAppMessages: (errors:string[]) => void
+    setAppMessage: any
 }
 
 const ItemEdit = (props:props) => {
@@ -18,7 +18,7 @@ const ItemEdit = (props:props) => {
   const { register, control, handleSubmit, setError, setValue, formState: { errors } } =  useForm<IFormInput>();
   const [loading, setLoading] = useState(true);
   const [etag, setEtag] = useState('');
-  const setAppMessages = props.setAppMessages;
+  const setAppMessage = props.setAppMessage;
 
   const promiseOptions = async (inputValue:string) => {
     const query = (inputValue.length > 0) ? `?name=${inputValue}` : '';
@@ -43,13 +43,15 @@ const ItemEdit = (props:props) => {
     api.put(`items/${id}`, toSend, {headers:{"If-Match":etag}})
       .then(resp => {
         console.log(resp);
-        setAppMessages(["Item succesfully updated"]);
+        setAppMessage({className:"messageSuccess", message:"Item successfully updated"});
       })
       .catch(e => {
         console.log(e);
 
-        // Check for input errors here
-        if (e.response.status === 422) {
+        if (!e.response) {
+          setAppMessage({className:"messageError", message:"Network Error"});
+          return;
+        } else if (e.response.status === 422) {
           const respError = e.response.data.errors.json;
 
           for (const [k,] of Object.entries(toSend)) {
@@ -64,29 +66,46 @@ const ItemEdit = (props:props) => {
           e.response.status === 404
             ? 'Resource Not Found'
             : 'An unexpected error has occured';
-          setAppMessages([error]);
+          setAppMessage({className:"messageError", message:error});
         }
       });
   };
 
+  // clear the appMessage on initial load
+  useEffect(() => {
+    setAppMessage(undefined);
+  }, [setAppMessage])
+
   useEffect(() => {
     async function getItem() {
-      const resp = await api.get(`items/${id}`);
-      const item = resp.data;
-      setEtag(resp.headers['etag']);
-      setValue('name', item.name)
-      setValue('amount', item.amount);
-      if (item.productId) {
-        setValue('productId', item.productId)
-      }
-      if (item.ingredientId) {
-        setValue('ingredientId', {label: item.ingredient.name, value:item.ingredient.id});
-      }
+      await api.get(`items/${id}`)
+      .then(resp => {
+        const item = resp.data;
+        setEtag(resp.headers['etag']);
+        setValue('name', item.name)
+        setValue('amount', item.amount);
+        if (item.productId) {
+          setValue('productId', item.productId)
+        }
+        if (item.ingredientId) {
+          setValue('ingredientId', {label: item.ingredient.name, value:item.ingredient.id});
+        }
+      })
+      .catch(e => {
+        const error =
+        !e.status
+        ? 'Network Error'
+        : e.status === 404
+          ? 'Resource Not Found'
+          : 'An unexpected error has occured';
+        setAppMessage({className:"messageError", message:error});
+      });
+  
       setLoading(false);
     }
 
     getItem();
-  }, [id, setValue]);
+  }, [id, setValue, setAppMessage]);
 
   return (loading
     ? (<p>Loading...</p>)

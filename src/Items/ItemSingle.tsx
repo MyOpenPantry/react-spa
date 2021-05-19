@@ -10,7 +10,12 @@ import { Item } from "./item.interface";
   Single components will typically have more information than their Selected counterpart, but Item isn't that interesting for now. 
 */
 
-const ItemSingle = () => {
+type props = {
+  setAppMessage: any
+}
+
+const ItemSingle = (props:props) => {
+  const setAppMessage = props.setAppMessage;
   const { id } = useParams<{id: string}>();
   // eslint-disable-next-line
   const {path, url} = useRouteMatch();
@@ -22,15 +27,31 @@ const ItemSingle = () => {
     return date.toLocaleString();
   }
 
+  // clear the appMessage on initial load
   useEffect(() => {
-    async function getItem() {
-      const resp = await api.get(`items/${id}`);
-      setItem(resp.data);
-      setLoading(false);
+    setAppMessage(undefined);
+  }, [setAppMessage])
+
+  useEffect(() => {
+    function getItem() {
+      api.get(`items/${id}`)
+      .then(resp => {
+        setItem(resp.data);
+        setLoading(false);
+      })
+      .catch(e => {
+        const error =
+        !e.response
+        ? 'Network Error'
+        : e.response.status === 404
+          ? 'Resource Not Found'
+          : 'An unexpected error has occured';
+        setAppMessage({className:"messageError", message:error});
+      });
     }
 
     getItem();
-  }, [id]);
+  }, [id, setAppMessage]);
 
   return (<div>
     {loading
@@ -47,7 +68,8 @@ const ItemSingle = () => {
           </p>
           <p>Last Updated: {getDateString(item?.updatedAt as string)}</p>
 
-          <Link to={`${url}/edit/${item?.id}`}>Edit</Link>
+          {/* TODO see if hardcoding is bad, or if I need to manipulate url? */}
+          <Link to={`edit/${item?.id}`}>Edit</Link>
         </aside>
       </section>
       )

@@ -9,11 +9,9 @@ import ItemForm from "./ItemForm";
 import ItemList from "./ItemList";
 import ItemSingle from './ItemSingle';
 
-const defaultAppMessages:string[] = [];
-
 function Items() {
   // messages passed by children
-  const [appMessages, setAppMessages] = useState(defaultAppMessages);
+  const [appMessage, setAppMessage] = useState<{className:string, message:string}|undefined>(undefined);
   // eslint-disable-next-line
   const { path, url } = useRouteMatch();
 
@@ -23,27 +21,20 @@ function Items() {
 
   return (
     <main>
-      {appMessages.length > 0 && (
-        <ul>
-          {appMessages.map((e) => (
-            <li>{e}</li>
-          ))}
-        </ul>
-        )
-      }
+      {appMessage !== undefined && <article><aside className={appMessage?.className}><p>{appMessage?.message}</p></aside></article>}
 
       <Switch>
         <Route exact path={path}>
-          <ItemList setAppMessages={setAppMessages}/>
+          <ItemList setAppMessage={setAppMessage}/>
         </Route>
-        <Route path={`${path}/create`}>
-          <ItemForm setAppMessages={setAppMessages} />
+        <Route exact path={`${path}/create`}>
+          <ItemForm setAppMessage={setAppMessage} />
         </Route>
         <Route path={`${path}/edit/:id`}>
-          <ItemEdit setAppMessages={setAppMessages} />
+          <ItemEdit setAppMessage={setAppMessage} />
         </Route>
         <Route path={`${path}/:id`}>
-          <ItemSingle />
+          <ItemSingle setAppMessage={setAppMessage} />
         </Route>
       </Switch>
    </main>

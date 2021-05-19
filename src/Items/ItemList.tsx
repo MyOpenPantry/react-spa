@@ -10,18 +10,18 @@ const defaultItemLists:Readonly<Item>[] = [];
 const defaultItem:Item = {name:'', amount:0}
 
 type props = {
-  setAppMessages: (errors:string[]) => void
+  setAppMessage:any
 }
 
 const ItemList = (props:props) => {
-  const [selectedItem, setSelectedItem] = useState(defaultItem);
+  const [selectedItem, setSelectedItem] = useState<Item>();
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState(defaultItemLists);
   const [queryString, setQueryString] = useState('');
   const [cancel, setCancel] = useState(axios.CancelToken.source());
   const [pageState, setPageState] = useState({currentPage: 1, totalPages: 1, prevButton: false, nextButton: false});
 
-  const setAppMessages = props.setAppMessages;
+  const setAppMessage = props.setAppMessage;
 
   const handleOnInputChange = (event:ChangeEvent<HTMLInputElement>) => {
     const arg = event.target.value;
@@ -70,28 +70,36 @@ const ItemList = (props:props) => {
 
   const handleDelete = async (item:Item) => {
     const confirm = window.confirm(`Delete Item "${item.name}"?`);
-    // send a get request to obtain the item's etag
-    const resp = await api.get(`items/${item.id}`);
-    if (resp.status !== 200) {
-      setAppMessages(["There was an error retrieving the item's etag"]);
-      return;
-    }
-    const etag = resp.headers?.etag;
-
+  
     if (!confirm) {
       return;
     }
-
-    const delResp = await api.delete(`items/${item.id}`, {headers:{"If-Match":etag}});
-    if (delResp.status === 204) {
-      setAppMessages(["Item was successfully deleted"]);
-      setSelectedItem(defaultItem);
-      // remove the item from the list (if it exists), otherwise it will still be there after deletion
-      setItems(items.filter((i:Item) => i.id !== item.id));
-    } else {
-      setAppMessages(["There was an error deleting the item"]);
-    }
+  
+    // send a get request to obtain the item's etag
+    api.get(`items/${item.id}`)
+      .then(resp => {
+        const etag = resp.headers?.etag;
+        api.delete(`items/${item.id}`, {headers:{"If-Match":etag}})
+          .then(resp => {
+            setAppMessage({className:"messageSuccess", message:"Item was successfully deleted"});
+            setSelectedItem(undefined);
+            // remove the item from the list (if it exists), otherwise it will still be there after deletion
+            setItems(items.filter((i:Item) => i.id !== item.id));
+          })
+          .catch(e => {
+            setAppMessage({className:"messageError", message:"There was an error deleting the item"});
+          });
+      })
+      .catch(e => {
+        setAppMessage({className:"messageError", message:"There was an error retrieving the item's etag"});
+        return;
+      });
   }
+
+  // clear the appMessage on initial load
+  useEffect(() => {
+    setAppMessage(undefined);
+  }, [setAppMessage])
 
   useEffect (() => {
     const fetchItems = () => {
@@ -100,7 +108,7 @@ const ItemList = (props:props) => {
         cancelToken: cancel.token,
       })
         .then(resp => {
-          setAppMessages([]);
+          setAppMessage(undefined);
           setLoading(false);
           setItems(resp.data);
           const pageHeaders = JSON.parse(resp.headers['x-pagination']);
@@ -117,18 +125,18 @@ const ItemList = (props:props) => {
             return;
           }
           const error =
-          !e.status
+          !e.response
           ? 'Network Error'
-          : e.status === 404
+          : e.response.status === 404
             ? 'Resource Not Found'
             : 'An unexpected error has occured';
-          setAppMessages([error]);
+          setAppMessage({className:"messageError", message:error});
           setLoading(false);
         });
     };
 
     fetchItems();
-  }, [cancel.token, pageState.currentPage, queryString, setAppMessages]);
+  }, [cancel.token, pageState.currentPage, queryString, setAppMessage]);
 
   return (
     <div>
@@ -187,7 +195,7 @@ const ItemList = (props:props) => {
               </div>
             </div>
             <div>
-              {selectedItem !== defaultItem
+              {selectedItem
                 ? <SelectedItem 
                     item={selectedItem}
                     closeCallback={() => setSelectedItem(defaultItem)}
