@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useForm, Controller, SubmitHandler } from "react-hook-form";
-import AsyncSelect from 'react-select/async';
+import AsyncCreatable from "react-select/async-creatable";
 import api from '../api';
 
 import {useParams} from 'react-router-dom';
@@ -14,11 +14,12 @@ type props = {
 }
 
 const ItemEdit = (props:props) => {
+  const setAppMessage = props.setAppMessage;
   const { id } = useParams<{id: string}>();
   const { register, control, handleSubmit, setError, setValue, formState: { errors } } =  useForm<IFormInput>();
   const [loading, setLoading] = useState(true);
   const [etag, setEtag] = useState('');
-  const setAppMessage = props.setAppMessage;
+  const [selectIsLoading, setSelectIsLoading] = useState(false);
 
   const promiseOptions = async (inputValue:string) => {
     const query = (inputValue.length > 0) ? `?name=${inputValue}` : '';
@@ -28,6 +29,24 @@ const ItemEdit = (props:props) => {
         "label": d.name
       })
     );
+  }
+
+  const handleCreate = (inputValue: any) => {
+    setSelectIsLoading(true);
+    api.post('ingredients/', {'name':inputValue})
+      .then(resp => {
+        setValue('ingredientId', {label: resp.data.name, value: resp.data.id});
+      })
+      .catch(e => {
+        if (!e.response) {
+          setAppMessage({className:"messageError", message:"Network Error"});
+        } else if (e.response.status === 422) {
+          console.log(e.response.data.errors.json); 
+          const respError = e.response.data.errors.json;
+          setError('ingredientId', {type:'resp', message: respError['name'][0]}, {shouldFocus: true})
+        }
+      });
+    setSelectIsLoading(false);
   }
 
   const onSubmit: SubmitHandler<IFormInput> = data => {
@@ -87,7 +106,7 @@ const ItemEdit = (props:props) => {
         if (item.productId) {
           setValue('productId', item.productId)
         }
-        if (item.ingredientId) {
+        if (item.ingredient) {
           setValue('ingredientId', {label: item.ingredient.name, value:item.ingredient.id});
         }
       })
@@ -134,11 +153,13 @@ const ItemEdit = (props:props) => {
             <Controller
               name="ingredientId"
               control={control}
-              render={({ field }) => <AsyncSelect 
+              render={({ field }) => <AsyncCreatable 
                 {...field}
-                cacheOptions
                 loadOptions={promiseOptions}
-                //defaultOptions={[{label: ingredient.name, value: ingredient.id}]}
+                onCreateOption={handleCreate}
+                isLoading={selectIsLoading}
+                isDisabled={selectIsLoading}
+                //defaultOptions
                 isClearable
               />}
             />

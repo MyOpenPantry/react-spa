@@ -1,6 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm, Controller, SubmitHandler } from "react-hook-form";
-import AsyncSelect from 'react-select/async';
+import AsyncCreatableSelect from 'react-select/async-creatable';
 import api from '../api';
 
 import { Item } from "./item.interface";
@@ -12,11 +12,12 @@ type props = {
 }
 
 const ItemForm = (props:props) => {
+  const setAppMessage = props.setAppMessage;
   const methods = useForm<IFormInput>({
     defaultValues:{name:'', amount:1, productId:null, ingredientId:null}
   });
-  const { register, control, reset, handleSubmit, setError, formState: { errors } } = methods;
-  const setAppMessage = props.setAppMessage;
+  const {register, control, reset, handleSubmit, setError, setValue, formState: { errors }} = methods;
+  const [isLoading, setIsLoading] = useState(false);
 
   const promiseOptions = async (inputValue:string) => {
     const query = (inputValue.length > 0) ? `?name=${inputValue}` : '';
@@ -26,6 +27,24 @@ const ItemForm = (props:props) => {
         "label": d.name
       })
     );
+  }
+
+  const handleCreate = (inputValue: any) => {
+    setIsLoading(true);
+    api.post('ingredients/', {'name':inputValue})
+      .then(resp => {
+        setValue('ingredientId', {label: resp.data.name, value: resp.data.id});
+      })
+      .catch(e => {
+        if (!e.response) {
+          setAppMessage({className:"messageError", message:"Network Error"});
+        } else if (e.response.status === 422) {
+          console.log(e.response.data.errors.json); 
+          const respError = e.response.data.errors.json;
+          setError('ingredientId', {type:'resp', message: respError['name'][0]}, {shouldFocus: true})
+        }
+      });
+    setIsLoading(false);
   }
 
   const onSubmit: SubmitHandler<IFormInput> = data => {
@@ -38,11 +57,13 @@ const ItemForm = (props:props) => {
     if(data.productId) {
       toSend.productId = data.productId;
     }
+    console.log(toSend);
 
     api.post('items/', toSend)
       .then(res => {
         console.log(res);
         reset({name:'', amount:1, productId:null, ingredientId:null});
+        //setValue('ingredientId', null);
         setAppMessage({className:"messageSuccess", message:"Item successfully created"});
       })
       .catch(e => {
@@ -96,14 +117,17 @@ const ItemForm = (props:props) => {
           {errors.productId && <span style={{'color':'red'}}>{errors.productId.message}</span>}
           {/* TODO ingredient id will be a dropdown or search */}
           <label>Ingredient</label>
+          {errors.ingredientId && <span style={{'color':'red'}}>{errors.ingredientId.message}</span>}
           <Controller
             name="ingredientId"
             control={control}
             defaultValue
-            render={({ field }) => <AsyncSelect 
+            render={({ field }) => <AsyncCreatableSelect 
               {...field}
-              cacheOptions
               loadOptions={promiseOptions}
+              onCreateOption={handleCreate}
+              isLoading={isLoading}
+              isDisabled={isLoading}
               defaultOptions
               isClearable
             />}
