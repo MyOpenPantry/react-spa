@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
 
-import {Link, useParams, useRouteMatch} from 'react-router-dom';
+import {Link, useParams} from 'react-router-dom';
 
 import { Item } from "./item.interface";
 
@@ -17,8 +17,6 @@ type props = {
 const ItemSingle = (props:props) => {
   const setAppMessage = props.setAppMessage;
   const { id } = useParams<{id: string}>();
-  // eslint-disable-next-line
-  const {path, url} = useRouteMatch();
   const [item, setItem] = useState<Item>();
   const [loading, setLoading] = useState(true);
 
